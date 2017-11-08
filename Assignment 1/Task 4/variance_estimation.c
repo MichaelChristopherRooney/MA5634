@@ -22,12 +22,22 @@ double func_3(double x){
 	return sqrt(x);
 }
 
+// g(x) = (2 / (sqrt(1 - (x*x)))
+double func_4(double x){
+	double temp;
+	temp = x * x;
+	temp = 1 - temp;
+	temp = sqrt(temp);
+	temp = 2 / temp;
+	return temp;		
+}
+
 // Array of the functions, their descriptions and their actual values when integrated from 0 to 1.
 // Used so we can iterate over them, print them and call them easily.
-#define NUM_FUNCS 3
-const char *FUNC_NAMES[NUM_FUNCS] = { "g(x) = x", "g(x) = x * x", "g(x) = sqrt(x)" };
-double (*FUNCS[NUM_FUNCS]) (double x) = {func_1, func_2, func_3 };
-double FUNC_ACTUAL_RESULT[NUM_FUNCS] = { 0.5, 0.33333333, 0.66666666 };
+#define NUM_FUNCS 4
+const char *FUNC_NAMES[NUM_FUNCS] = { "g(x) = x", "g(x) = x*x", "g(x) = sqrt(x)", "g(x) = (2/(sqrt(1-(x*x)))" };
+double (*FUNCS[NUM_FUNCS]) (double x) = {func_1, func_2, func_3, func_4 };
+double FUNC_ACTUAL_RESULT[NUM_FUNCS] = { 0.5, 0.33333333, 0.66666666, M_PI };
 
 
 // Limits of the integrals
@@ -51,15 +61,15 @@ int main(void){
 		int j;
 		printf("================================================\n");		
 		printf("n=%d\n", n);
-		printf("FUNCTION\tRESULT\t\tABSOLUTE ERROR\n");
+		printf("FUNCTION\t\t\tRESULT\n");
 		printf("================================================\n");
 		for(j = 0; j < NUM_FUNCS; j++){
 			double result = 0.0;
 			int k;
 			for(k = 0; k < n; k++){
-				result = result + ((FUNCS[j](rn[k]) * (b - a)) / n);
+				result = result + ((pow(FUNCS[j](rn[k]) * (b - a), 2)) - pow(FUNC_ACTUAL_RESULT[j], 2)) / n;
 			}
-			printf("%s\t%f\t%f\n", FUNC_NAMES[j], result, fabs(result - FUNC_ACTUAL_RESULT[j]));
+			printf("%s\t\t\t%f\n", FUNC_NAMES[j], result);
 		}
 		printf("\n");
 		free(rn);

@@ -1,5 +1,6 @@
-// A simple program for calculating the CDF of a binomial RV
-
+// A simple program for calculating the expected CDF of a binomial RV
+// Uses the equation for the expected CDF found here:
+// http://www.itl.nist.gov/div898/handbook/eda/section3/eda366i.htm 
 #include <math.h>
 
 const int n = 20;

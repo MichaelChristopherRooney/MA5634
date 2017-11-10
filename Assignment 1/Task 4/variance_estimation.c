@@ -67,6 +67,7 @@ int main(void){
 			double result = 0.0;
 			int k;
 			for(k = 0; k < n; k++){
+				// Var[g(x)] = E[g(x)^2] + μ^2
 				result = result + ((pow(FUNCS[j](rn[k]) * (b - a), 2)) - pow(FUNC_ACTUAL_RESULT[j], 2)) / n;
 			}
 			printf("%s\t\t\t%f\n", FUNC_NAMES[j], result);

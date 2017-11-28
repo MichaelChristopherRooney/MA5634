@@ -1,0 +1,6 @@
+n: 100, result: 0.858712, absolute error: 0.014397
+n: 1000, result: 0.859169, absolute error: 0.013940
+n: 10000, result: 0.875482, absolute error: 0.002373
+n: 100000, result: 0.873640, absolute error: 0.000531
+n: 1000000, result: 0.873082, absolute error: 0.000027
+

@@ -1,0 +1,6 @@
+n: 100, rate: 0.452000, result: 0.851819, absolute error: 0.021290
+n: 1000, rate: 0.452000, result: 0.867744, absolute error: 0.005365
+n: 10000, rate: 0.452000, result: 0.868344, absolute error: 0.004765
+n: 100000, rate: 0.452000, result: 0.869986, absolute error: 0.003123
+n: 1000000, rate: 0.452000, result: 0.873518, absolute error: 0.000409
+

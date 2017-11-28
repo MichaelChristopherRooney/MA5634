@@ -20,14 +20,11 @@ static double func(double s){
 	return (temp1 / temp2);
 }
 
-// Adjust the operations so that random numbers in interval [0,1)
-// can be used to estimate integral from 0 to 3.
-// See Simulation by Sheldon Ross, page 39
-static double func_adjusted(double rv){
-	double res = func(a + ((b - a) * rv));
-	return res * (b-a);
+static double generate_exponential_rv(double U, double rate){
+	double ret = (-1/rate);
+	ret = ret * log(U);
+	return ret;
 }
-
 
 // The number of random numbers to be used in each estimation
 #define NUM_SIZES 5
@@ -42,12 +39,13 @@ int main(void){
 		gettimeofday(&tv, NULL);
 		rlxd_init(1, tv.tv_usec); 
 		ranlxd(rn, n);
-		double result = 0.0;
+		double rate = 0.452; // found via experimentation to be the best value
+		double result_exp = 0.0;
 		int k;
 		for(k = 0; k < n; k++){
-			result = result + ((func_adjusted(rn[k])) / n);
+			result_exp = result_exp + ((func(generate_exponential_rv(rn[k], rate)) * (b-a)) / n);
 		}
-		printf("n: %d, result: %lf, absolute error: %lf\n", n, result, fabs(result - ACTUAL_RESULT));
+		printf("n: %d, rate: %lf, result: %lf, absolute error: %lf\n", n, rate, result_exp, fabs(result_exp - ACTUAL_RESULT));
 		free(rn);
 	}
 	return 0;

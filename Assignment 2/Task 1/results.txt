@@ -1,0 +1,5 @@
+Simulated 1000000 months.
+Average number of withdrawals over the simulation: 50.002282
+Average amount per withdrawal over the simulation: 800.031109
+Probability that total withdrawn in a month > 50'000: 0.284031
+

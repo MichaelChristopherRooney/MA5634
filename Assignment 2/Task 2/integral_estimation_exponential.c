@@ -20,6 +20,8 @@ static double func(double s){
 	return (temp1 / temp2);
 }
 
+// Generates an exponentially distributed RV with a given rate using the method described in
+// Simulation 3rd edition by Sheldon Ross, page 64, example 5B.
 static double generate_exponential_rv(double U, double rate){
 	double ret = (-1/rate);
 	ret = ret * log(U);

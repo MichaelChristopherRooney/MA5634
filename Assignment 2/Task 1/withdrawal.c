@@ -4,7 +4,7 @@
 #include "ranlxd.h"
 
 // Generates an exponentially distributed RV with a given rate using the method described in
-// Simulation 3rd edition by Sheldon Ross, page 65
+// Simulation 3rd edition by Sheldon Ross, page 64, example 5B.
 static double generate_exponential_rv(double rate){
 	double U;
 	ranlxd(&U, 1);

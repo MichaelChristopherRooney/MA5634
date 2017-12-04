@@ -3,13 +3,19 @@ Running 10000 simulations with p = 0.400000, n = 20, a = 16
 Found e^t* = 6.000000
 Found p' = 0.800000
 Found M(t*) = 3.000000^20
-Average sum: 16.016700
+Average sum: 15.975700
+Average estimator: 0.00030332326889038081
+Estimator standard deviation: 0.0004642860502213979
+Estimator variance: 2.1556153643018643e-07
 ==================================================
 ==================================================
 Running 10000 simulations with p = 0.200000, n = 20, a = 16
 Found e^t* = 16.000000
 Found p' = 0.800000
 Found M(t*) = 4.000000^20
-Average sum: 15.980200
+Average sum: 16.003600
+Average estimator: 1.3723938172915954e-08
+Estimator standard deviation: 2.5743431917503633e-08
+Estimator variance: 6.6272428689114479e-16
 ==================================================
 

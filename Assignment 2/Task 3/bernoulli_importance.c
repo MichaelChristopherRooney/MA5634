@@ -40,10 +40,8 @@ void run_simulation(double p, int n, int a){
 	printf("Found e^t* = %f\n", e_t_star);
 	double p_prime = get_p_prime(p, e_t_star);
 	printf("Found p' = %f\n", p_prime);
-	double m_t_star = pow((e_t_star * p) + (1-p), n);
-	printf("Found M(t*) = %f\n", m_t_star);
+	printf("Found M(t*) = %f^%d\n", (e_t_star * p) + (1-p), n);
 	double avg_sum = 0;
-	double avg_var = 0;
 	int k;
 	for(k = 0; k < NUM_RUNS; k++){
 		int sum = 0;
@@ -53,12 +51,9 @@ void run_simulation(double p, int n, int a){
 			sum += brv;
 		}
 		avg_sum += sum;
-		avg_var += abs(a - sum);
 	}
 	avg_sum = avg_sum / NUM_RUNS;
-	avg_var = fabs(avg_sum - (float) a);
 	printf("Average sum: %f\n", avg_sum);
-	printf("Average variance: %f\n", avg_var);
 	printf("==================================================\n");
 }
 

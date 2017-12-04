@@ -37,7 +37,7 @@ static void init_ranlux(){
 }
 
 static const int ACTUAL_AVG_NUM_WITHDRAWALS = 50;
-static const int ACTUAL_AVG_AMOUNT_WITHDRAWN = 800;
+static const int ACTUAL_AVG_AMOUNT_WITHDRAWN = 800.00;
 static const int SIMULATION_ITERATIONS = 1000000;
 static const double SIMULATION_TARGET = 50000.00;
 
@@ -50,12 +50,15 @@ int main(){
 	// Each iteration is one month
 	for(i = 0; i < SIMULATION_ITERATIONS; i++){
 		// Calculate the number of withdrawals and the average amount withdrawn for this month (iteration).
+		double total = 0.0;
 		int iter_withdrawals = generate_poisson_rv(ACTUAL_AVG_NUM_WITHDRAWALS);
-		double iter_amount = generate_exponential_rv(1.0 / ACTUAL_AVG_AMOUNT_WITHDRAWN);
-		double total = iter_withdrawals * iter_amount;
+		int k;
+		for(k = 0; k < iter_withdrawals; k++){
+			total += generate_exponential_rv(1.0 / ACTUAL_AVG_AMOUNT_WITHDRAWN);
+		}
 		// Add to the averages over the entire simulation.
 		sim_avg_num_withdrawals = sim_avg_num_withdrawals + (iter_withdrawals);		
-		sim_avg_amount_withdrawn = sim_avg_amount_withdrawn + iter_amount;
+		sim_avg_amount_withdrawn = sim_avg_amount_withdrawn + (total / iter_withdrawals);
 		if(total > SIMULATION_TARGET){
 			count++;
 		}
@@ -63,7 +66,7 @@ int main(){
 	sim_avg_num_withdrawals = sim_avg_num_withdrawals / SIMULATION_ITERATIONS;
 	sim_avg_amount_withdrawn = sim_avg_amount_withdrawn / SIMULATION_ITERATIONS;
 	printf("Simulated %d months.\n", SIMULATION_ITERATIONS);
-	printf("Average number of withdrawals over the simulation: %f\n", sim_avg_num_withdrawals);
+	printf("Average number of withdrawals per month over the simulation: %f\n", sim_avg_num_withdrawals);
 	printf("Average amount per withdrawal over the simulation: %f\n", sim_avg_amount_withdrawn);
 	printf("Probability that total withdrawn in a month > 50'000: %f\n", (float) count / (float) i);
 	return 0;

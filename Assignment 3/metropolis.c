@@ -17,7 +17,7 @@ static double g(double x){
 
 // Simple f(x) for now
 static double f(double x){
-	return x + 100;
+	return cos(x);
 }
 
 // Generates a RV between in range [0, 1] using RANLUX
@@ -25,8 +25,6 @@ static double f(double x){
 static double generate_x_proposal(double x, double delta){
 	double rv;
 	ranlxd(&rv, 1);
-	double u_min = x - delta;
-	double u_max = x + delta;
 	return (x - delta) + (rv * (2 * delta));
 }
 
@@ -39,9 +37,9 @@ static int accept_or_reject(double x, double x_proposal){
 	double u;
 	ranlxd(&u, 1);
 	if(res < u){
-		return 1;
+		return 0;
 	}
-	return 0;
+	return 1;
 }
 
 // TODO: accept a function for f(x) and g(x)
@@ -59,18 +57,15 @@ static double run_metropolis(double x_start, double delta, int num_iter){
 		x_proposal = generate_x_proposal(x, delta);
 		int accept = accept_or_reject(x, x_proposal);
 		if(accept == 1){
-			//printf("Accepted: %f\n", x_proposal);
 			num_accepted++;
 			x = x_proposal;
 			// is this the right way to sample ?
 			if(i > therm_limit){
 				accepted_after_therm++;
 				double y = f(x);
-				printf("x = %f, y = %f\n", x, y);
 				f_est = f_est + y;
 			}
 		} else {
-			//printf("Rejected: %f\n", x_proposal);
 			num_rejected++;
 		}
 	}
@@ -89,7 +84,7 @@ void init_ranlux(){
 
 int main(void){
 	init_ranlux();
-	run_metropolis(0, 0.2, 10000);
+	run_metropolis(0, 1.5, 1000000);
 	return 0;
 }
 

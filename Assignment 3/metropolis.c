@@ -5,11 +5,12 @@
 
 #include "ranlxd.h"
 
+// TODO:
+// make a param object that is passed around instead of having so many params
+// in function calls
+
 // Declaration of a function defined in variance.c
-void calculate_variances(double *results, int num_results, int bin_size);
-
-
-// TODO: pass g(x) and f(x) as parameters
+void calculate_variances(double *results, double mean, int num_results, int bin_size);
 
 // This is g(x), which is also the PDF
 static double g(double x){
@@ -49,11 +50,11 @@ static int accept_or_reject(double x, double x_proposal){
 	return 1;
 }
 
-// TODO: accept a function for f(x) and g(x)
-// TODO: seems to be working "ok" with small delta, but I need to verify it
-static double *run_metropolis(double x_start, double delta, int num_iter){
-	int num_accepted = 0;
-	int num_rejected = 0;
+// Generates the markov chain.
+// The chain is returned and f(x) is applied to it elsewhere.
+static double *run_metropolis(double x_start, double delta, int num_iter, int *num_accepted, int *num_rejected){
+	*num_accepted = 0;
+	*num_rejected = 0;
 	double x = x_start;
 	double x_proposal;
 	double *results = calloc(num_iter, sizeof(double));
@@ -62,16 +63,13 @@ static double *run_metropolis(double x_start, double delta, int num_iter){
 		x_proposal = generate_x_proposal(x, delta);
 		int accept = accept_or_reject(x, x_proposal);
 		if(accept == 1){
-			num_accepted++;
+			(*num_accepted)++;
 			x = x_proposal;
 		} else {
-			num_rejected++;
+			(*num_rejected)++;
 		}
 		results[i] = x;
 	}
-	printf("Total accepted: %d\n", num_accepted);
-	printf("Total rejected: %d\n", num_rejected);
-	printf("Acceptance rate: %f%%\n", ((float) num_accepted / (float) num_iter) * 100.0f);
 	return results;
 }
 
@@ -86,38 +84,43 @@ static void save_results(double *results, int size, char *filename){
 		fprintf(fp, "%d, %f\n", i, results[i]);
 	}
 	fclose(fp);
-	printf("Markov chain saved to %s\n", filename);
 }
 
-
-// Pass a null filename and the results won't be saved to disk
-// Pass bin size = 0 to avoid calculating variance
-static double estimate_integral(double (*f)(double), char *f_desc, double x_start, double delta, int num_iter, int discard, char *filename, int bin_size){
+static void print_stats(char *f_desc, double x_start, double delta, int num_iter, int discard, double estimate, int num_accepted, int num_rejected){
 	printf("=========================================\n");
 	printf("Statistics for f(x) = %s\n", f_desc);
 	printf("Starting x = %f\n", x_start);
 	printf("Delta = %f\n", delta);
 	printf("Number of iterations = %d\n", num_iter);
 	printf("Discarding first %d results to account for thermalisation\n", discard);
-	double *results = run_metropolis(x_start, delta, num_iter);
-	double estimate = 0.0;
+	printf("Total accepted: %d\n", num_accepted);
+	printf("Total rejected: %d\n", num_rejected);
+	printf("Acceptance rate: %f%%\n", ((float) num_accepted / (float) num_iter) * 100.0f);
+	printf("Estimate is: %f\n", estimate);
+	printf("=========================================\n");
+}
+
+// Pass a null filename and the results won't be saved to disk
+static double *estimate_integral(double (*f)(double), char *f_desc, double x_start, double delta, int num_iter, int discard, char *filename, int print_results, double *estimate){
+	int num_accepted;
+	int num_rejected;
+	double *f_results = calloc(num_iter, sizeof(double));
+	double *results = run_metropolis(x_start, delta, num_iter, &num_accepted, &num_rejected);
+	*estimate = 0.0;
 	int i;
 	for(i = discard; i < num_iter; i++){
-		estimate += f(results[i]);
+		f_results[i] = f(results[i]);
+		*estimate += f_results[i];
 	}
-	estimate = estimate / num_iter;
+	*estimate = (*estimate) / num_iter;
 	if(filename != NULL){
 		save_results(results, num_iter, filename);
 	}
-	if(bin_size != 0){
-		calculate_variances(results, num_iter, bin_size);
-	} else {
-		printf("Not calculating variance\n");
-	}
-	printf("Estimate is: %f\n", estimate);
-	printf("=========================================\n");
 	free(results);
-	return estimate;
+	if(print_results == 1){
+		print_stats(f_desc, x_start, delta, num_iter, discard, *estimate, num_accepted, num_rejected);
+	}
+	return f_results;
 }
 
 static void init_ranlux(){
@@ -131,35 +134,50 @@ static void produce_graph_data(){
 	double start_x = 10.0;
 	int num_iter = 1000;
 	int discard = 100;
+	double estimate;
 	// cos(x) with delta = 1.5, 3, and 6
-	estimate_integral(&cos_x, "cos(x)", start_x, 1.5, num_iter, discard, "data/cosx-1.txt", 0);
-	estimate_integral(&cos_x, "cos(x)", start_x, 15, num_iter, discard, "data/cosx-2.txt", 0);
-	estimate_integral(&cos_x, "cos(x)", start_x, 150, num_iter, discard, "data/cosx-3.txt", 0);
+	estimate_integral(&cos_x, "cos(x)", start_x, 1.5, num_iter, discard, "data/cosx-1.txt", 1, &estimate);
+	estimate_integral(&cos_x, "cos(x)", start_x, 15, num_iter, discard, "data/cosx-2.txt", 1, &estimate);
+	estimate_integral(&cos_x, "cos(x)", start_x, 150, num_iter, discard, "data/cosx-3.txt", 1, &estimate);
 	// x*x with delta = 1.5, 3, and 6
-	estimate_integral(&x_squared, "x*x", start_x, 1.5, num_iter, discard, "data/xsqr-1.txt", 0);
-	estimate_integral(&x_squared, "x*x", start_x, 15, num_iter, discard, "data/xsqr-2.txt", 0);
-	estimate_integral(&x_squared, "x*x", start_x, 150, num_iter, discard, "data/xsqr-3.txt", 0);
+	estimate_integral(&x_squared, "x*x", start_x, 1.5, num_iter, discard, "data/xsqr-1.txt", 1, &estimate);
+	estimate_integral(&x_squared, "x*x", start_x, 15, num_iter, discard, "data/xsqr-2.txt", 1, &estimate);
+	estimate_integral(&x_squared, "x*x", start_x, 150, num_iter, discard, "data/xsqr-3.txt", 1, &estimate);
 }
 
 static void delta_vs_acceptance(){
 	int num_iter = 1000000;
 	int discard = 100;
-	estimate_integral(&cos_x, "cos(x)", 0, 0.5, num_iter, discard, NULL, 0);
-	estimate_integral(&cos_x, "cos(x)", 0, 1.0, num_iter, discard, NULL, 0);
-	estimate_integral(&cos_x, "cos(x)", 0, 2.0, num_iter, discard, NULL, 0);
-	estimate_integral(&cos_x, "cos(x)", 0, 5.0, num_iter, discard, NULL, 0);
-	estimate_integral(&cos_x, "cos(x)", 0, 10.0, num_iter, discard, NULL, 0);
-	estimate_integral(&cos_x, "cos(x)", 0, 25.0, num_iter, discard, NULL, 0);
-	estimate_integral(&cos_x, "cos(x)", 0, 50.0, num_iter, discard, NULL, 0);	
-	estimate_integral(&cos_x, "cos(x)", 0, 100.0, num_iter, discard, NULL, 0);
-	estimate_integral(&cos_x, "cos(x)", 0, 150.0, num_iter, discard, NULL, 0);		
+	double estimate;
+	estimate_integral(&cos_x, "cos(x)", 0, 0.5, num_iter, discard, NULL, 1, &estimate);
+	estimate_integral(&cos_x, "cos(x)", 0, 1.0, num_iter, discard, NULL, 1, &estimate);
+	estimate_integral(&cos_x, "cos(x)", 0, 2.0, num_iter, discard, NULL, 1, &estimate);
+	estimate_integral(&cos_x, "cos(x)", 0, 5.0, num_iter, discard, NULL, 1, &estimate);
+	estimate_integral(&cos_x, "cos(x)", 0, 10.0, num_iter, discard, NULL, 1, &estimate);
+	estimate_integral(&cos_x, "cos(x)", 0, 25.0, num_iter, discard, NULL, 1, &estimate);
+	estimate_integral(&cos_x, "cos(x)", 0, 50.0, num_iter, discard, NULL, 1, &estimate);	
+	estimate_integral(&cos_x, "cos(x)", 0, 100.0, num_iter, discard, NULL, 1, &estimate);
+	estimate_integral(&cos_x, "cos(x)", 0, 150.0, num_iter, discard, NULL, 1, &estimate);		
+}
+
+static void variance_calulcations(){
+	double x_start = 0.0;
+	double delta = 2.4;
+	int num_iter = 10000000;
+	int discard = 100;
+	double estimate;
+	double *cosx_results = estimate_integral(&cos_x, "cos(x)", x_start, delta, num_iter, discard, NULL, 1, &estimate);
+	calculate_variances(cosx_results, estimate, num_iter, 10);
+	calculate_variances(cosx_results, estimate, num_iter, 100);
+	calculate_variances(cosx_results, estimate, num_iter, 1000);
+	calculate_variances(cosx_results, estimate, num_iter, 10000);
+	calculate_variances(cosx_results, estimate, num_iter, 100000);
+	calculate_variances(cosx_results, estimate, num_iter, 1000000);
 }
 
 int main(void){
 	init_ranlux();
-	float delta = 2.4;
-	estimate_integral(&cos_x, "cos(x)", 0, delta, 1000000, 100, NULL, 100);
-	//estimate_integral(&x_squared, "x*x", 0, delta, 10000000, 100, NULL, 0);
+	variance_calulcations();
 	//delta_vs_acceptance();
 	//produce_graph_data();
 	return 0;

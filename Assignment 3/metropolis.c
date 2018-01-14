@@ -9,6 +9,21 @@
 // make a param object that is passed around instead of having so many params
 // in function calls
 
+struct met_params {
+	double x_start;
+	double delta;
+	int num_iter;
+	int discard;
+	char *filename;
+	int num_accepted;
+	int num_rejected;
+	double *results;
+	double *f_results;
+	double estimate;
+	char *f_desc;
+	double (*f)(double);
+};
+
 // Declaration of a function defined in variance.c
 void calculate_variances(double *results, double mean, int num_results, int bin_size);
 
@@ -52,25 +67,21 @@ static int accept_or_reject(double x, double x_proposal){
 
 // Generates the markov chain.
 // The chain is returned and f(x) is applied to it elsewhere.
-static double *run_metropolis(double x_start, double delta, int num_iter, int *num_accepted, int *num_rejected){
-	*num_accepted = 0;
-	*num_rejected = 0;
-	double x = x_start;
+static void run_metropolis(struct met_params *params){
+	double x = params->x_start;
 	double x_proposal;
-	double *results = calloc(num_iter, sizeof(double));
-	results[0] = x_start;
-	for(int i = 1; i < num_iter; i++){ // note: starts at 1
-		x_proposal = generate_x_proposal(x, delta);
+	params->results[0] = params->x_start;
+	for(int i = 1; i < params->num_iter; i++){ // note: starts at 1
+		x_proposal = generate_x_proposal(x, params->delta);
 		int accept = accept_or_reject(x, x_proposal);
 		if(accept == 1){
-			(*num_accepted)++;
+			params->num_accepted++;
 			x = x_proposal;
 		} else {
-			(*num_rejected)++;
+			params->num_rejected++;
 		}
-		results[i] = x;
+		params->results[i] = x;
 	}
-	return results;
 }
 
 static void save_results(double *results, int size, char *filename){
@@ -86,41 +97,56 @@ static void save_results(double *results, int size, char *filename){
 	fclose(fp);
 }
 
-static void print_stats(char *f_desc, double x_start, double delta, int num_iter, int discard, double estimate, int num_accepted, int num_rejected){
+static void print_stats(struct met_params *params){
 	printf("=========================================\n");
-	printf("Statistics for f(x) = %s\n", f_desc);
-	printf("Starting x = %f\n", x_start);
-	printf("Delta = %f\n", delta);
-	printf("Number of iterations = %d\n", num_iter);
-	printf("Discarding first %d results to account for thermalisation\n", discard);
-	printf("Total accepted: %d\n", num_accepted);
-	printf("Total rejected: %d\n", num_rejected);
-	printf("Acceptance rate: %f%%\n", ((float) num_accepted / (float) num_iter) * 100.0f);
-	printf("Estimate is: %f\n", estimate);
+	printf("Statistics for f(x) = %s\n", params->f_desc);
+	printf("Starting x = %f\n", params->x_start);
+	printf("Delta = %f\n", params->delta);
+	printf("Number of iterations = %d\n", params->num_iter);
+	printf("Discarding first %d results to account for thermalisation\n", params->discard);
+	printf("Total accepted: %d\n", params->num_accepted);
+	printf("Total rejected: %d\n", params->num_rejected);
+	printf("Acceptance rate: %f%%\n", ((float) params->num_accepted / (float) params->num_iter) * 100.0f);
+	printf("Estimate is: %f\n", params->estimate);
 	printf("=========================================\n");
 }
 
+static struct met_params *init_params(double (*f)(double), char *f_desc, double x_start, double delta, int num_iter, int discard, char *filename){
+	struct met_params *params = calloc(1, sizeof(struct met_params));
+	params->x_start = x_start;
+	params->delta = delta;
+	params->num_iter = num_iter;
+	params->discard = discard;
+	params->filename = filename;
+	params->num_accepted = 0;
+	params->num_rejected = 0;
+	params->f_results = calloc(num_iter, sizeof(double));
+	params->results = calloc(num_iter, sizeof(double));
+	params->estimate = 0.0;
+	params->f = f;
+	params->f_desc = f_desc;
+	return params;
+}
+
+static void free_params(struct met_params *params){
+	free(params->results);
+	free(params->f_results);
+	free(params);
+}
+
 // Pass a null filename and the results won't be saved to disk
-static double *estimate_integral(double (*f)(double), char *f_desc, double x_start, double delta, int num_iter, int discard, char *filename, int print_results, double *estimate){
-	int num_accepted;
-	int num_rejected;
-	double *f_results = calloc(num_iter, sizeof(double));
-	double *results = run_metropolis(x_start, delta, num_iter, &num_accepted, &num_rejected);
-	*estimate = 0.0;
+static void estimate_integral(struct met_params *params){
+	run_metropolis(params);
 	int i;
-	for(i = discard; i < num_iter; i++){
-		f_results[i] = f(results[i]);
-		*estimate += f_results[i];
+	for(i = params->discard; i < params->num_iter; i++){
+		params->f_results[i] = params->f(params->results[i]);
+		params->estimate += params->f_results[i];
 	}
-	*estimate = (*estimate) / num_iter;
-	if(filename != NULL){
-		save_results(results, num_iter, filename);
+	params->estimate = params->estimate / params->num_iter;
+	if(params->filename != NULL){
+		save_results(params->results, params->num_iter, params->filename);
 	}
-	free(results);
-	if(print_results == 1){
-		print_stats(f_desc, x_start, delta, num_iter, discard, *estimate, num_accepted, num_rejected);
-	}
-	return f_results;
+	print_stats(params);
 }
 
 static void init_ranlux(){
@@ -130,7 +156,9 @@ static void init_ranlux(){
 }
 
 // This produces the data needed for the graphs in question (b).
+// TODO: use params here
 static void produce_graph_data(){
+	/*
 	double start_x = 10.0;
 	int num_iter = 1000;
 	int discard = 100;
@@ -143,9 +171,12 @@ static void produce_graph_data(){
 	estimate_integral(&x_squared, "x*x", start_x, 1.5, num_iter, discard, "data/xsqr-1.txt", 1, &estimate);
 	estimate_integral(&x_squared, "x*x", start_x, 15, num_iter, discard, "data/xsqr-2.txt", 1, &estimate);
 	estimate_integral(&x_squared, "x*x", start_x, 150, num_iter, discard, "data/xsqr-3.txt", 1, &estimate);
+	*/
 }
 
+// TODO: use params here
 static void delta_vs_acceptance(){
+	/*
 	int num_iter = 1000000;
 	int discard = 100;
 	double estimate;
@@ -158,21 +189,19 @@ static void delta_vs_acceptance(){
 	estimate_integral(&cos_x, "cos(x)", 0, 50.0, num_iter, discard, NULL, 1, &estimate);	
 	estimate_integral(&cos_x, "cos(x)", 0, 100.0, num_iter, discard, NULL, 1, &estimate);
 	estimate_integral(&cos_x, "cos(x)", 0, 150.0, num_iter, discard, NULL, 1, &estimate);		
+	*/
 }
 
 static void variance_calulcations(){
-	double x_start = 0.0;
-	double delta = 2.4;
-	int num_iter = 10000000;
-	int discard = 100;
-	double estimate;
-	double *cosx_results = estimate_integral(&cos_x, "cos(x)", x_start, delta, num_iter, discard, NULL, 1, &estimate);
-	calculate_variances(cosx_results, estimate, num_iter, 10);
-	calculate_variances(cosx_results, estimate, num_iter, 100);
-	calculate_variances(cosx_results, estimate, num_iter, 1000);
-	calculate_variances(cosx_results, estimate, num_iter, 10000);
-	calculate_variances(cosx_results, estimate, num_iter, 100000);
-	calculate_variances(cosx_results, estimate, num_iter, 1000000);
+	struct met_params *params = init_params(&cos_x, "cos(x)", 0.0, 2.4, 10000000, 100, NULL);
+	estimate_integral(params);
+	//calculate_variances(cosx_results, estimate, num_iter, 10);
+	//calculate_variances(cosx_results, estimate, num_iter, 100);
+	//calculate_variances(cosx_results, estimate, num_iter, 1000);
+	//calculate_variances(cosx_results, estimate, num_iter, 10000);
+	//calculate_variances(cosx_results, estimate, num_iter, 100000);
+	//calculate_variances(cosx_results, estimate, num_iter, 1000000);
+	free_params(params);
 }
 
 int main(void){

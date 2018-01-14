@@ -79,12 +79,13 @@ static void save_results(double *results, int size, char *filename){
 	}
 	int i;
 	for(i = 0; i < size; i++){
-		fprintf(fp, "%f\n", results[i]);
+		fprintf(fp, "%d, %f\n", i, results[i]);
 	}
 	fclose(fp);
 	printf("Markov chain saved to %s\n", filename);
 }
 
+// Pass a null filename and the results won't be saved to disk
 static double estimate_integral(double (*f)(double), char *f_desc, double x_start, double delta, int num_iter, int discard, char *filename){
 	printf("=========================================\n");
 	printf("Statistics for f(x) = %s\n", f_desc);
@@ -99,7 +100,9 @@ static double estimate_integral(double (*f)(double), char *f_desc, double x_star
 		estimate += f(results[i]);
 	}
 	estimate = estimate / num_iter;
-	save_results(results, num_iter, filename);
+	if(filename != NULL){
+		save_results(results, num_iter, filename);
+	}
 	printf("Estimate is: %f\n", estimate);
 	printf("=========================================\n");
 	return estimate;
@@ -111,10 +114,26 @@ void init_ranlux(){
 	rlxd_init(1, tv.tv_usec); 
 }
 
+// This produces the data needed for the graphs in question (b).
+void produce_graph_data(){
+	double start_x = 10.0;
+	int num_iter = 1000;
+	int discard = 100;
+	// cos(x) with delta = 1.5, 3, and 6
+	estimate_integral(&cos_x, "cos(x)", start_x, 1.5, num_iter, discard, "data/cosx-1.txt");
+	estimate_integral(&cos_x, "cos(x)", start_x, 15, num_iter, discard, "data/cosx-2.txt");
+	estimate_integral(&cos_x, "cos(x)", start_x, 150, num_iter, discard, "data/cosx-3.txt");
+	// x*x with delta = 1.5, 3, and 6
+	estimate_integral(&x_squared, "x*x", start_x, 1.5, num_iter, discard, "data/xsqr-1.txt");
+	estimate_integral(&x_squared, "x*x", start_x, 15, num_iter, discard, "data/xsqr-2.txt");
+	estimate_integral(&x_squared, "x*x", start_x, 150, num_iter, discard, "data/xsqr-3.txt");
+}
+
 int main(void){
 	init_ranlux();
-	estimate_integral(&cos_x, "cos(x)", 0, 1.5, 1000000, 1000, "cos(x)-0-start-1.5-delta.txt");
-	estimate_integral(&x_squared, "x^2", 0, 1.5, 1000000, 1000, "x*x-0-start-1.5-delta.txt");
+	estimate_integral(&cos_x, "cos(x)", 0, 2.5, 10000000, 100, NULL);
+	estimate_integral(&x_squared, "x*x", 0, 2.5, 10000000, 100, NULL);
+	//produce_graph_data();
 	return 0;
 }
 

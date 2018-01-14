@@ -5,6 +5,10 @@
 
 #include "ranlxd.h"
 
+// Declaration of a function defined in variance.c
+void calculate_variances(double *results, int num_results, int bin_size);
+
+
 // TODO: pass g(x) and f(x) as parameters
 
 // This is g(x), which is also the PDF
@@ -85,8 +89,10 @@ static void save_results(double *results, int size, char *filename){
 	printf("Markov chain saved to %s\n", filename);
 }
 
+
 // Pass a null filename and the results won't be saved to disk
-static double estimate_integral(double (*f)(double), char *f_desc, double x_start, double delta, int num_iter, int discard, char *filename){
+// Pass bin size = 0 to avoid calculating variance
+static double estimate_integral(double (*f)(double), char *f_desc, double x_start, double delta, int num_iter, int discard, char *filename, int bin_size){
 	printf("=========================================\n");
 	printf("Statistics for f(x) = %s\n", f_desc);
 	printf("Starting x = %f\n", x_start);
@@ -103,36 +109,58 @@ static double estimate_integral(double (*f)(double), char *f_desc, double x_star
 	if(filename != NULL){
 		save_results(results, num_iter, filename);
 	}
+	if(bin_size != 0){
+		calculate_variances(results, num_iter, bin_size);
+	} else {
+		printf("Not calculating variance\n");
+	}
 	printf("Estimate is: %f\n", estimate);
 	printf("=========================================\n");
+	free(results);
 	return estimate;
 }
 
-void init_ranlux(){
+static void init_ranlux(){
 	struct timeval tv;
 	gettimeofday(&tv, NULL);
 	rlxd_init(1, tv.tv_usec); 
 }
 
 // This produces the data needed for the graphs in question (b).
-void produce_graph_data(){
+static void produce_graph_data(){
 	double start_x = 10.0;
 	int num_iter = 1000;
 	int discard = 100;
 	// cos(x) with delta = 1.5, 3, and 6
-	estimate_integral(&cos_x, "cos(x)", start_x, 1.5, num_iter, discard, "data/cosx-1.txt");
-	estimate_integral(&cos_x, "cos(x)", start_x, 15, num_iter, discard, "data/cosx-2.txt");
-	estimate_integral(&cos_x, "cos(x)", start_x, 150, num_iter, discard, "data/cosx-3.txt");
+	estimate_integral(&cos_x, "cos(x)", start_x, 1.5, num_iter, discard, "data/cosx-1.txt", 0);
+	estimate_integral(&cos_x, "cos(x)", start_x, 15, num_iter, discard, "data/cosx-2.txt", 0);
+	estimate_integral(&cos_x, "cos(x)", start_x, 150, num_iter, discard, "data/cosx-3.txt", 0);
 	// x*x with delta = 1.5, 3, and 6
-	estimate_integral(&x_squared, "x*x", start_x, 1.5, num_iter, discard, "data/xsqr-1.txt");
-	estimate_integral(&x_squared, "x*x", start_x, 15, num_iter, discard, "data/xsqr-2.txt");
-	estimate_integral(&x_squared, "x*x", start_x, 150, num_iter, discard, "data/xsqr-3.txt");
+	estimate_integral(&x_squared, "x*x", start_x, 1.5, num_iter, discard, "data/xsqr-1.txt", 0);
+	estimate_integral(&x_squared, "x*x", start_x, 15, num_iter, discard, "data/xsqr-2.txt", 0);
+	estimate_integral(&x_squared, "x*x", start_x, 150, num_iter, discard, "data/xsqr-3.txt", 0);
+}
+
+static void delta_vs_acceptance(){
+	int num_iter = 1000000;
+	int discard = 100;
+	estimate_integral(&cos_x, "cos(x)", 0, 0.5, num_iter, discard, NULL, 0);
+	estimate_integral(&cos_x, "cos(x)", 0, 1.0, num_iter, discard, NULL, 0);
+	estimate_integral(&cos_x, "cos(x)", 0, 2.0, num_iter, discard, NULL, 0);
+	estimate_integral(&cos_x, "cos(x)", 0, 5.0, num_iter, discard, NULL, 0);
+	estimate_integral(&cos_x, "cos(x)", 0, 10.0, num_iter, discard, NULL, 0);
+	estimate_integral(&cos_x, "cos(x)", 0, 25.0, num_iter, discard, NULL, 0);
+	estimate_integral(&cos_x, "cos(x)", 0, 50.0, num_iter, discard, NULL, 0);	
+	estimate_integral(&cos_x, "cos(x)", 0, 100.0, num_iter, discard, NULL, 0);
+	estimate_integral(&cos_x, "cos(x)", 0, 150.0, num_iter, discard, NULL, 0);		
 }
 
 int main(void){
 	init_ranlux();
-	estimate_integral(&cos_x, "cos(x)", 0, 2.5, 10000000, 100, NULL);
-	estimate_integral(&x_squared, "x*x", 0, 2.5, 10000000, 100, NULL);
+	float delta = 2.4;
+	estimate_integral(&cos_x, "cos(x)", 0, delta, 1000000, 100, NULL, 100);
+	//estimate_integral(&x_squared, "x*x", 0, delta, 10000000, 100, NULL, 0);
+	//delta_vs_acceptance();
 	//produce_graph_data();
 	return 0;
 }

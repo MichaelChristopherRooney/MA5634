@@ -8,6 +8,7 @@
 // TODO: make functions save data to file
 // TODO: rename functions to be more descriptive
 // TODO: add comments
+// TODO: make sure thermalisation is being accounted for
 
 struct met_params {
 	double x_start;

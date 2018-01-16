@@ -1,18 +1,21 @@
-OBJECTS = metropolis.o ranlxd.o variance.o
+OBJECTS = main.o metropolis.o ranlxd.o variance.o
 CC = gcc
 CFLAGS = -Wall -lm
 EXEC_NAME = prog
 
-all: metropolis.o ranlxd.o variance.o
-	$(CC) -o $(EXEC_NAME) metropolis.o ranlxd.o variance.o $(CFLAGS)
+all: main.o metropolis.o ranlxd.o variance.o
+	$(CC) -o $(EXEC_NAME) main.o metropolis.o ranlxd.o variance.o $(CFLAGS)
 
-metropolis.o: metropolis.c ranlxd.h
+main.o:	main.c common.h ranlxd.h
+	$(CC) -c main.c $(CFLAGS)
+
+metropolis.o: metropolis.c ranlxd.h common.h
 	$(CC) -c metropolis.c $(CFLAGS)
 
-ranlxd.o: ranlxd.c ranlxd.h
+ranlxd.o: ranlxd.c ranlxd.h common.h
 	$(CC) -c ranlxd.c $(CFLAGS)
 
-variance.o: variance.c
+variance.o: variance.c common.h
 	$(CC) -c variance.c $(CFLAGS)
 
 clean:

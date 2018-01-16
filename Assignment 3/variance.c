@@ -1,6 +1,4 @@
-#include <stdio.h>
-#include <stdlib.h>
-#include <math.h>
+#include "common.h"
 
 // TODO: this isn't correct at the moment
 

@@ -62,7 +62,7 @@ static void print_stats(double mean, double naive_variance, double bin_variance,
 	printf("Mean is %f\n", mean);
 	printf("Naive variance is %f\n", naive_variance);
 	printf("Bin variance is %E\n", bin_variance);
-	printf("Integrated autocorrelation time is %f\n", bin_variance / naive_variance);
+	printf("Integrated autocorrelation time is %E\n", bin_variance / naive_variance); // ask him
 	printf("=========================================\n");
 }
 

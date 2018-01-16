@@ -5,9 +5,9 @@
 
 #include "ranlxd.h"
 
-// TODO:
-// make a param object that is passed around instead of having so many params
-// in function calls
+// TODO: make functions save data to file
+// TODO: rename functions to be more descriptive
+// TODO: add comments
 
 struct met_params {
 	double x_start;
@@ -71,7 +71,8 @@ static void run_metropolis(struct met_params *params){
 	double x = params->x_start;
 	double x_proposal;
 	params->results[0] = params->x_start;
-	for(int i = 1; i < params->num_iter; i++){ // note: starts at 1
+	int i;
+	for(i = 1; i < params->num_iter; i++){ // note: starts at 1
 		x_proposal = generate_x_proposal(x, params->delta);
 		int accept = accept_or_reject(x, x_proposal);
 		if(accept == 1){
@@ -146,7 +147,6 @@ static void estimate_integral(struct met_params *params){
 	if(params->filename != NULL){
 		save_results(params->results, params->num_iter, params->filename);
 	}
-	print_stats(params);
 }
 
 static void init_ranlux(){
@@ -156,59 +156,48 @@ static void init_ranlux(){
 }
 
 // This produces the data needed for the graphs in question (b).
-// TODO: use params here
+
 static void produce_graph_data(){
-	/*
-	double start_x = 10.0;
-	int num_iter = 1000;
-	int discard = 100;
-	double estimate;
-	// cos(x) with delta = 1.5, 3, and 6
-	estimate_integral(&cos_x, "cos(x)", start_x, 1.5, num_iter, discard, "data/cosx-1.txt", 1, &estimate);
-	estimate_integral(&cos_x, "cos(x)", start_x, 15, num_iter, discard, "data/cosx-2.txt", 1, &estimate);
-	estimate_integral(&cos_x, "cos(x)", start_x, 150, num_iter, discard, "data/cosx-3.txt", 1, &estimate);
-	// x*x with delta = 1.5, 3, and 6
-	estimate_integral(&x_squared, "x*x", start_x, 1.5, num_iter, discard, "data/xsqr-1.txt", 1, &estimate);
-	estimate_integral(&x_squared, "x*x", start_x, 15, num_iter, discard, "data/xsqr-2.txt", 1, &estimate);
-	estimate_integral(&x_squared, "x*x", start_x, 150, num_iter, discard, "data/xsqr-3.txt", 1, &estimate);
-	*/
+	double (*fs[2])(double) = { &cos_x, &x_squared };
+	char *f_str[2] = {"cos(x)", "x*x"};
+	double deltas[3] = { 1.5, 15.0, 150.0 };
+	int i, n;
+	for(i = 0; i < 2; i++){
+		for(n = 0; n < 3; n++){
+			struct met_params *params = init_params(fs[i], f_str[i], 0.0, deltas[n], 1000000, 100, NULL);
+			estimate_integral(params);
+			free_params(params);
+		}
+	}
 }
 
-// TODO: use params here
 static void delta_vs_acceptance(){
-	/*
-	int num_iter = 1000000;
-	int discard = 100;
-	double estimate;
-	estimate_integral(&cos_x, "cos(x)", 0, 0.5, num_iter, discard, NULL, 1, &estimate);
-	estimate_integral(&cos_x, "cos(x)", 0, 1.0, num_iter, discard, NULL, 1, &estimate);
-	estimate_integral(&cos_x, "cos(x)", 0, 2.0, num_iter, discard, NULL, 1, &estimate);
-	estimate_integral(&cos_x, "cos(x)", 0, 5.0, num_iter, discard, NULL, 1, &estimate);
-	estimate_integral(&cos_x, "cos(x)", 0, 10.0, num_iter, discard, NULL, 1, &estimate);
-	estimate_integral(&cos_x, "cos(x)", 0, 25.0, num_iter, discard, NULL, 1, &estimate);
-	estimate_integral(&cos_x, "cos(x)", 0, 50.0, num_iter, discard, NULL, 1, &estimate);	
-	estimate_integral(&cos_x, "cos(x)", 0, 100.0, num_iter, discard, NULL, 1, &estimate);
-	estimate_integral(&cos_x, "cos(x)", 0, 150.0, num_iter, discard, NULL, 1, &estimate);		
-	*/
+	double deltas[] = { 0.5, 1.0, 2.0, 5.0, 10.0, 25.0, 50.0, 100.0, 150.0 };
+	int i;
+	for(i = 0; i < sizeof(deltas) / sizeof(deltas[0]); i++){
+		struct met_params *params = init_params(&cos_x, "cos(x)", 0.0, deltas[i], 1000000, 100, NULL);
+		estimate_integral(params);
+		free_params(params);
+	}
 }
 
 static void variance_calulcations(){
 	struct met_params *params = init_params(&cos_x, "cos(x)", 0.0, 2.4, 10000000, 100, NULL);
 	estimate_integral(params);
-	//calculate_variances(cosx_results, estimate, num_iter, 10);
-	//calculate_variances(cosx_results, estimate, num_iter, 100);
-	//calculate_variances(cosx_results, estimate, num_iter, 1000);
-	//calculate_variances(cosx_results, estimate, num_iter, 10000);
-	//calculate_variances(cosx_results, estimate, num_iter, 100000);
-	//calculate_variances(cosx_results, estimate, num_iter, 1000000);
+	int bin_sizes[] = { 5, 10, 50, 100, 500, 1000, 5000, 10000, 50000, 100000, 500000, 1000000, 5000000 };
+	int i;
+	for(i = 0; i < sizeof(bin_sizes) / sizeof(bin_sizes[0]); i++){
+		calculate_variances(params->f_results, params->estimate, params->num_iter, bin_sizes[i]);
+	}
 	free_params(params);
 }
 
+//TODO: command line arguments that let you pick what code to run
 int main(void){
 	init_ranlux();
-	variance_calulcations();
+	//variance_calulcations();
 	//delta_vs_acceptance();
-	//produce_graph_data();
+	produce_graph_data();
 	return 0;
 }
 

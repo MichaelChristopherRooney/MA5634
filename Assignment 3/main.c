@@ -60,7 +60,7 @@ static void create_history_data(){
 	int i, n, j;
 	for(i = 0; i < 2; i++){
 		for(n = 0; n < 3; n++){
-			struct met_params *params = init_params(fs[i], f_str[i], 0.0, deltas[n], 1000000, 100, NULL);
+			struct met_params *params = init_params(fs[i], f_str[i], 0.0, deltas[n], 1000, 100, NULL);
 			sprintf(buf, "data/%s%d.txt", file_names[i], n + 1);
 			FILE *fp = fopen(buf, "w");
 			estimate_integral(params);

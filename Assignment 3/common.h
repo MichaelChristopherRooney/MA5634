@@ -28,3 +28,5 @@ void calculate_variances(double *results, double mean, int num_results, int bin_
 
 void estimate_integral(struct met_params *params);
 void print_met_stats(struct met_params *params);
+
+void do_gaussian_rv();

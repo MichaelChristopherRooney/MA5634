@@ -93,6 +93,7 @@ int main(void){
 	init_ranlux();
 	//variance_calulcations();
 	//delta_vs_acceptance();
-	produce_graph_data();
+	//produce_graph_data();
+	do_gaussian_rv();
 	return 0;
 }

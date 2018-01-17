@@ -51,7 +51,6 @@ static void free_params(struct met_params *params){
 }
 
 // This produces the data needed for the graphs in question (b).
-
 static void produce_graph_data(){
 	double (*fs[2])(double) = { &cos_x, &x_squared };
 	char *f_str[2] = {"cos(x)", "x*x"};
@@ -68,13 +67,16 @@ static void produce_graph_data(){
 }
 
 static void delta_vs_acceptance(){
+	FILE *fp = fopen("data/delta_vs_acceptance_rate.txt", "w");
 	double deltas[] = { 0.5, 1.0, 2.0, 5.0, 10.0, 25.0, 50.0, 100.0, 150.0 };
 	int i;
 	for(i = 0; i < sizeof(deltas) / sizeof(deltas[0]); i++){
 		struct met_params *params = init_params(&cos_x, "cos(x)", 0.0, deltas[i], 1000000, 100, NULL);
 		estimate_integral(params);
+		fprintf(fp, "%f, %f\n", deltas[i], ((float) params->num_accepted / (float) params->num_iter) * 100.0f);
 		free_params(params);
 	}
+	fclose(fp);
 }
 
 static void variance_calulcations(){
@@ -92,7 +94,7 @@ static void variance_calulcations(){
 int main(void){
 	init_ranlux();
 	//variance_calulcations();
-	//delta_vs_acceptance();
+	delta_vs_acceptance();
 	//produce_graph_data();
 	do_gaussian_rv();
 	return 0;

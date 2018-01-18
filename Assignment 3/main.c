@@ -89,7 +89,7 @@ static void create_history_data(){
 
 static void create_delta_vs_acceptance_data(){
 	FILE *fp = fopen("data/delta_vs_acceptance_rate.txt", "w");
-	double deltas[] = { 0.5, 1.0, 2.0, 5.0, 10.0, 25.0, 50.0, 100.0, 150.0 };
+	double deltas[] = { 0.5, 1.0, 1.5, 2.0, 5.0, 10.0, 25.0, 50.0, 100.0, 150.0 };
 	int i;
 	for(i = 0; i < sizeof(deltas) / sizeof(deltas[0]); i++){
 		struct met_params *params = init_params(&cos_x, "cos(x)", 0.0, deltas[i], 1000000, 100, NULL);
@@ -103,7 +103,7 @@ static void create_delta_vs_acceptance_data(){
 static void variance_calulcations(){
 	struct met_params *params = init_params(&cos_x, "cos(x)", 0.0, 2.4, 10000000, 100, NULL);
 	estimate_integral(params);
-	int bin_sizes[] = { 1, 2, 5, 10, 50, 100, 500, 1000, 5000, 10000, 50000, 100000 };
+	int bin_sizes[] = { 2, 5, 10, 50, 100, 500, 1000, 5000, 10000, 50000, 100000 };
 	//int bin_sizes[] = { 10 };
 	int i;
 	for(i = 0; i < sizeof(bin_sizes) / sizeof(bin_sizes[0]); i++){
@@ -115,8 +115,8 @@ static void variance_calulcations(){
 //TODO: command line arguments that let you pick what code to run
 int main(void){
 	init_ranlux();
-	variance_calulcations();
-	//create_delta_vs_acceptance_data();
+	//variance_calulcations();
+	create_delta_vs_acceptance_data();
 	//create_history_data();
 	//do_gaussian_rv();
 	return 0;

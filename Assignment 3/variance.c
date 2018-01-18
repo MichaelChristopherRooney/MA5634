@@ -9,7 +9,7 @@ static double calulcate_bin_mean(double *results, int bin_start, int bin_size){
 		bin_mean += results[i];
 	}
 	bin_mean = bin_mean / bin_size;
-	printf("Bin mean is %f\n", bin_mean);
+	//printf("Bin mean is %f\n", bin_mean);
 	return bin_mean;
 }
 
@@ -37,16 +37,6 @@ static double calculate_binned_variance(struct variance_results *var_results, do
 	return binned_variance;
 }
 
-static double calculate_mean(double *results, int num_results){
-	double mean = 0.0;
-	int i;
-	for(i = 0; i < num_results; i++){
-		mean += results[i];
-	}
-	mean = mean / num_results;
-	return mean;
-}
-
 static double calculate_naive_variance(struct variance_results *var_results, double *results, int num_results){
 	double variance = 0.0;
 	int i;
@@ -71,7 +61,6 @@ void calculate_variances(double *results, double mean, int num_results, int bin_
 	struct variance_results *var_results = calloc(1, sizeof(struct variance_results));
 	var_results->bin_size = bin_size;
 	var_results->mean = mean;
-	//double mean = calculate_mean(results, num_results);
 	var_results->naive_variance = calculate_naive_variance(var_results, results, num_results);
 	var_results->bin_variance = calculate_binned_variance(var_results, results, num_results);
 	print_stats(var_results);

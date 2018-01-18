@@ -69,12 +69,16 @@ void print_met_stats(struct met_params *params){
 	printf("=========================================\n");
 }
 
+// TODO: how to account for thermalisation here
 void estimate_integral(struct met_params *params){
 	run_metropolis(params);
 	int i;
-	for(i = params->discard; i < params->num_iter; i++){
-		params->f_results[i] = params->f(params->results[i]);
+	for(i = 0; i < params->num_iter; i++){
+		// pass x to f(x)
+		double est = params->f(params->results[i]);
+		params->f_results[i] = est;
 		params->estimate += params->f_results[i];
+		params->running_estimates[i] = params->estimate / (i + 1);
 	}
 	params->estimate = params->estimate / params->num_iter;
 	if(params->filename != NULL){

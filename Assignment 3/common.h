@@ -16,6 +16,7 @@ struct met_params {
 	double *results;
 	double *f_results;
 	double estimate;
+	double *running_estimates;
 	char *f_desc;
 	double (*f)(double);
 };
@@ -23,6 +24,14 @@ struct met_params {
 double g(double x);
 double cos_x(double x);
 double x_squared(double x);
+
+struct variance_results {
+	long long bin_size;
+	long long num_bins;
+	double bin_variance;
+	double naive_variance;
+	double mean;
+};
 
 void calculate_variances(double *results, double mean, int num_results, int bin_size);
 

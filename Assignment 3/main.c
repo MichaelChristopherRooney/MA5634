@@ -37,6 +37,7 @@ static struct met_params *init_params(double (*f)(double), char *f_desc, double 
 	params->num_accepted = 0;
 	params->num_rejected = 0;
 	params->f_results = calloc(num_iter, sizeof(double));
+	params->running_estimates = calloc(num_iter, sizeof(double));
 	params->results = calloc(num_iter, sizeof(double));
 	params->estimate = 0.0;
 	params->f = f;
@@ -51,6 +52,8 @@ static void free_params(struct met_params *params){
 }
 
 // This produces the data needed for the graphs in question (b).
+// First it produces a history of the estimate of f(x) = cos(x) and f(x) = x*x
+// Then it produces a history of the value of x itself.
 static void create_history_data(){
 	double (*fs[2])(double) = { &cos_x, &x_squared };
 	char *f_str[2] = {"cos(x)", "x*x"};
@@ -60,16 +63,27 @@ static void create_history_data(){
 	int i, n, j;
 	for(i = 0; i < 2; i++){
 		for(n = 0; n < 3; n++){
-			struct met_params *params = init_params(fs[i], f_str[i], 0.0, deltas[n], 1000, 100, NULL);
+			struct met_params *params = init_params(fs[i], f_str[i], 0.0, deltas[n], 10000, 100, NULL);
 			sprintf(buf, "data/%s%d.txt", file_names[i], n + 1);
 			FILE *fp = fopen(buf, "w");
 			estimate_integral(params);
 			for(j = 0; j < params->num_iter; j++){
-				fprintf(fp, "%d, %f\n", j, params->results[j]);
+				fprintf(fp, "%d, %f\n", j, params->running_estimates[j]);
 			}
 			fclose(fp);
 			free_params(params);
 		}
+	}
+	for(i = 0; i < 3; i++){
+		sprintf(buf, "data/x-history-%d.txt", i + 1);
+		FILE *fp = fopen(buf, "w");
+		struct met_params *params = init_params(&cos_x, "cos(x)", 10.0, deltas[i], 1000, 100, NULL);
+		estimate_integral(params);
+		for(j = 0; j < params->num_iter; j++){
+			fprintf(fp, "%d, %f\n", j, params->results[j]);
+		}
+		fclose(fp);
+		free_params(params);
 	}
 }
 
@@ -89,7 +103,8 @@ static void create_delta_vs_acceptance_data(){
 static void variance_calulcations(){
 	struct met_params *params = init_params(&cos_x, "cos(x)", 0.0, 2.4, 10000000, 100, NULL);
 	estimate_integral(params);
-	int bin_sizes[] = { 5, 10, 50, 100, 500, 1000, 5000, 10000, 50000, 100000, 500000, 1000000, 5000000 };
+	int bin_sizes[] = { 1, 2, 5, 10, 50, 100, 500, 1000, 5000, 10000, 50000, 100000 };
+	//int bin_sizes[] = { 10 };
 	int i;
 	for(i = 0; i < sizeof(bin_sizes) / sizeof(bin_sizes[0]); i++){
 		calculate_variances(params->f_results, params->estimate, params->num_iter, bin_sizes[i]);
@@ -100,9 +115,9 @@ static void variance_calulcations(){
 //TODO: command line arguments that let you pick what code to run
 int main(void){
 	init_ranlux();
-	//variance_calulcations();
+	variance_calulcations();
 	//create_delta_vs_acceptance_data();
-	create_history_data();
-	do_gaussian_rv();
+	//create_history_data();
+	//do_gaussian_rv();
 	return 0;
 }

@@ -16,6 +16,7 @@ struct met_params {
 	double *results;
 	double *f_results;
 	double estimate;
+	double running_estimate;
 	double *running_estimates;
 	char *f_desc;
 	double (*f)(double);
@@ -33,7 +34,7 @@ struct variance_results {
 	double mean;
 };
 
-void calculate_variances(double *results, double mean, int num_results, int bin_size);
+struct variance_results *calculate_variances(double *results, double mean, int num_results, int bin_size);
 
 void estimate_integral(struct met_params *params);
 void print_met_stats(struct met_params *params);

@@ -57,13 +57,14 @@ static void print_stats(struct variance_results *var_results){
 	printf("=========================================\n");
 }
 
-void calculate_variances(double *results, double mean, int num_results, int bin_size){
+struct variance_results *calculate_variances(double *results, double mean, int num_results, int bin_size){
 	struct variance_results *var_results = calloc(1, sizeof(struct variance_results));
 	var_results->bin_size = bin_size;
 	var_results->mean = mean;
 	var_results->naive_variance = calculate_naive_variance(var_results, results, num_results);
 	var_results->bin_variance = calculate_binned_variance(var_results, results, num_results);
 	print_stats(var_results);
+	return var_results;
 
 }
 

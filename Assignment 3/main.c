@@ -36,7 +36,8 @@ static struct met_params *init_params(double (*f)(double), char *f_desc, double 
 	params->filename = filename;
 	params->num_accepted = 0;
 	params->num_rejected = 0;
-	params->f_results = calloc(num_iter, sizeof(double));
+	params->f_results = calloc(num_iter - discard, sizeof(double));
+	params->running_estimate = 0.0;
 	params->running_estimates = calloc(num_iter, sizeof(double));
 	params->results = calloc(num_iter, sizeof(double));
 	params->estimate = 0.0;
@@ -112,11 +113,25 @@ static void variance_calulcations(){
 	free_params(params);
 }
 
+static void demo(){
+	// cos(x)
+	struct met_params *params = init_params(&cos_x, "cos(x)", 0.0, 2.4, 10000000, 10000, NULL);
+	estimate_integral(params);
+	calculate_variances(params->f_results, params->estimate, params->num_iter - params->discard, 10);
+	free_params(params);params = init_params(&cos_x, "cos(x)", 0.0, 2.4, 10000000, 10000, NULL);
+	// x*x
+	params = init_params(&x_squared, "x^2", 0.0, 2.4, 10000000, 100, NULL);
+	estimate_integral(params);
+	calculate_variances(params->f_results, params->estimate, params->num_iter - params->discard, 10);
+	free_params(params);
+}
+
 //TODO: command line arguments that let you pick what code to run
 int main(void){
 	init_ranlux();
+	demo();
 	//variance_calulcations();
-	create_delta_vs_acceptance_data();
+	//create_delta_vs_acceptance_data();
 	//create_history_data();
 	//do_gaussian_rv();
 	return 0;

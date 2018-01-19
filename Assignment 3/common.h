@@ -34,6 +34,7 @@ struct variance_results {
 	double mean;
 };
 
+void print_var_stats(struct variance_results *var_results);
 struct variance_results *calculate_variances(double *results, double mean, int num_results, int bin_size);
 
 void estimate_integral(struct met_params *params);

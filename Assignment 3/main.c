@@ -1,10 +1,5 @@
 #include "common.h"
 
-// TODO: make functions save data to file
-// TODO: rename functions to be more descriptive
-// TODO: add comments
-// TODO: make sure thermalisation is being accounted for
-
 // This is g(x), which is also the PDF
 double g(double x){
 	double temp = x * x;
@@ -104,29 +99,41 @@ static void create_delta_vs_acceptance_data(){
 static void variance_calulcations(){
 	struct met_params *params = init_params(&cos_x, "cos(x)", 0.0, 2.4, 10000000, 100, NULL);
 	estimate_integral(params);
-	int bin_sizes[] = { 2, 5, 10, 50, 100, 500, 1000, 5000, 10000, 50000, 100000 };
-	//int bin_sizes[] = { 10 };
+	int bin_sizes[] = { 5, 10, 50, 100, 500, 1000, 5000, 10000, 50000, 100000 };
+	//int bin_sizes[] = { 2 };
+	struct variance_results *var_results;
+	FILE *fp = fopen("data/bin_size_vs_bin_variance.txt", "w");
 	int i;
 	for(i = 0; i < sizeof(bin_sizes) / sizeof(bin_sizes[0]); i++){
-		calculate_variances(params->f_results, params->estimate, params->num_iter, bin_sizes[i]);
+		var_results = calculate_variances(params->f_results, params->estimate, params->num_iter - params->discard, bin_sizes[i]);
+		fprintf(fp, "%d, %E\n", bin_sizes[i], var_results->bin_variance);
+		free(var_results);
 	}
 	free_params(params);
+	fclose(fp);
 }
 
+// A small demo that shows the stats for cos(x) and x*x
 static void demo(){
 	// cos(x)
 	struct met_params *params = init_params(&cos_x, "cos(x)", 0.0, 2.4, 10000000, 10000, NULL);
 	estimate_integral(params);
-	calculate_variances(params->f_results, params->estimate, params->num_iter - params->discard, 10);
-	free_params(params);params = init_params(&cos_x, "cos(x)", 0.0, 2.4, 10000000, 10000, NULL);
+	print_met_stats(params);
+	struct variance_results *var_results = calculate_variances(params->f_results, params->estimate, params->num_iter - params->discard, 100000);
+	print_var_stats(var_results);
+	free(var_results);
+	free_params(params);
 	// x*x
-	params = init_params(&x_squared, "x^2", 0.0, 2.4, 10000000, 100, NULL);
+	params = init_params(&x_squared, "x^2", 0.0, 2.4, 10000000, 10000, NULL);
 	estimate_integral(params);
-	calculate_variances(params->f_results, params->estimate, params->num_iter - params->discard, 10);
+	print_met_stats(params);
+	var_results = calculate_variances(params->f_results, params->estimate, params->num_iter - params->discard, 100000);
+	print_var_stats(var_results);
+	free(var_results);
 	free_params(params);
 }
 
-//TODO: command line arguments that let you pick what code to run
+// Uncomment the below functions to generate the respective data.
 int main(void){
 	init_ranlux();
 	demo();
